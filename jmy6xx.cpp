@@ -34,7 +34,7 @@ void JMY6xx::hexprint(const byte* data, int length) {
   }
 }
 
-void serialhexdump(const byte* data, int length) {
+void JMY6xx::serialhexdump(const byte* data, int length) {
   for (int i=0; i<length; i+=8) {
     if (i<10) Serial.print("  ");
     else if (i<100) Serial.print(" ");
@@ -158,7 +158,6 @@ const byte* JMY6xx::scan() {
 
   //data[0] = 0x00; // AFI
   if (_req(0x5C, 0)) {
-    serialhexdump(data, 9);
     for (int i=0; i<8; i++) {
       uid[i] = data[8-i]; // uid, reverse
     }

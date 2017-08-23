@@ -37,6 +37,7 @@ class JMY6xx {
     int _recv();
     int _read(); // wait for a single byte
     void hexprint(const byte* data, int len);
+    void serialhexdump(const byte* data, int len);
 };
 
 #endif
