@@ -1,5 +1,4 @@
-jmy6xx
-======
+# Arduino JMY6xx
 
 This library is meant to be used with JMY6xx modules (like the JMY622 or JMY612) from jinmuyu.com
 
