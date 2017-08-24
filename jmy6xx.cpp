@@ -8,16 +8,31 @@ JMY6xx::JMY6xx(Stream *S) {
   if (debug>=1) Serial.println("JMY6xx init UART");
 }
 
-JMY6xx::JMY6xx(int addr) {
+JMY6xx::JMY6xx(int i2c_addr) {
   this->S = NULL;
+	this->i2c_addr = addr;
   if (debug>=1) Serial.println("JMY6xx init I2C");
+  Wire.begin();
 }
 
 void JMY6xx::setAddress(int addr) {
   this->addr = addr;
 }
 
+void JMY6xx::hexprint(Stream *S, const byte* data, int length) {
+  if (!data) {
+    S->println("NULL");
+    return;
+  }
+  for (int i=0; i<length; i++) {
+    if (i==0) S->print(data[i] < 0x10 ? "0" : "");
+    else S->print(data[i] < 0x10 ? ":0" : ":");
+    S->print(data[i], HEX);
+  }
+}
+
 void JMY6xx::hexprint(const byte* data, int length) {
+//	hexprint(&Serial, data, length);
   if (!data) {
     Serial.println("NULL");
     return;
@@ -29,40 +44,44 @@ void JMY6xx::hexprint(const byte* data, int length) {
   }
 }
 
-void JMY6xx::hexdump(const byte* data, int length) {
+void JMY6xx::hexdump(Stream *S, const byte* data, int length) {
   if (!data) {
-    Serial.println("  0: NULL POINTER");
+    S->println("  0: NULL POINTER");
     return;
   }
   for (int i=0; i<length; i+=8) {
-    if (i<10) Serial.print("  ");
-    else if (i<100) Serial.print(" ");
-    Serial.print(i);
-    Serial.print(":");
+    if (i<10) S->print("  ");
+    else if (i<100) S->print(" ");
+    S->print(i);
+    S->print(":");
     for (int j=i; j<i+8; j++) {
       if (j>=length) {
-        Serial.print("   ");
+        S->print("   ");
       } else {
-        Serial.print(data[j] < 0x10 ? " 0" : " ");
-        Serial.print(data[j], HEX);
+        S->print(data[j] < 0x10 ? " 0" : " ");
+        S->print(data[j], HEX);
       }
     }
-    Serial.print("  \"");
+    S->print("  \"");
     for (int j=i; j<length && j<i+8; j++) {
-      if (data[j]>=0x20 && data[j]<=0x7E) Serial.write(data[j]);
-      else Serial.print(".");
+      if (data[j]>=0x20 && data[j]<=0x7E) S->write(data[j]);
+      else S->print(".");
     }
-    Serial.println("\"");
+    S->println("\"");
   }
 }
 
+void JMY6xx::hexdump(const byte* data, int length) {
+	hexdump(&Serial, data, length);
+}
+			
+
 int JMY6xx::_req(byte cmd, int len) {
-  if (!S) Wire.beginTransmission(addr);
   _send(cmd, len);
-  int rlen = _recv();
-  if (!S) Wire.endTransmission();
-  
-  if (buf[3] == cmd) return 1;
+	int rlen = _recv();
+  if (!rlen) return 0;
+  if (buf[3] == cmd) return rlen;
+
   if (buf[3] == 0xA3 and cmd == 0x5C) return 0; // nothing scanned, but no reason to spam
   if (debug>=1) {
     Serial.print("Request fail, expected 0x");
@@ -70,13 +89,14 @@ int JMY6xx::_req(byte cmd, int len) {
     Serial.print(" but got 0x");
     Serial.println(buf[3], HEX);
     delay(100);
-    while(S->available()) { S->read(); }
   }
   return 0;
 }
 
 void JMY6xx::_send(byte cmd, int len) {
-  if (debug>=3) Serial.println("SENDING");
+  if (!S) Wire.beginTransmission(i2c_addr);
+
+	if (debug>=3) Serial.println("SENDING");
   len +=4; // 2 length, 1 addr, 1 cmd
   int i;
   buf[1] = len%256;
@@ -90,104 +110,118 @@ void JMY6xx::_send(byte cmd, int len) {
     chk ^= buf[i];
   }
   if (debug>=3) { Serial.print("chk: 0x"); Serial.println(chk, HEX); }
-  S->write(chk);
-}
+  S ? S->write(chk) : Wire.write(chk);
 
-int JMY6xx::_read() {
-  if (S) {
-    for (int i=0; i<read_timeout/5; i++) {
-      if (S->available()) {
-        return S->read();
-      }
-    }
-  } else {
-    for (int i=0; i<read_timeout/5; i++) {
-      if (Wire.available()) {
-        return Wire.read();
-      }
-    }
-  }
-  Serial.println(String("")+"_read() TIMEOUT");
-  return -1;
+	if (!S) Wire.endTransmission();
 }
 
 int JMY6xx::_read(byte* buf, int size) {
-  long expire = millis() + read_timeout;
-  if (S) {
-    for (int at = 0;;) {
-      int r = S->readBytes(buf+at, size-at);
-      at += r;
-      hexdump(buf, at);
-      if (at==size) return 0;
-      if (millis() > expire) {
-	Serial.println("_read(at, size) TIMEOUT");
-	return 0;
-      }
-      delay(5);
-    }
-  } else {
-  }
-  return 1;
+	if (debug>=3) {
+		Serial.print("_read(buf, ");
+		Serial.print(size);
+		Serial.println(")");
+	}
+	if (S) {
+	  long expire = millis() + read_timeout;
+	  for (int at = 0;;) {
+	    int r = S->readBytes(buf+at, size-at);
+	    at += r;
+	    if (debug>=3) hexdump(buf, at);
+	    if (at==size) return 0;
+	    if (millis() > expire) {
+				Serial.println("_read(at, size) TIMEOUT");
+				return 0;
+	    }
+	    delay(5);
+	  }
+	  return 1;
+	} else {
+		int pos = 0;
+		while(pos<size) {
+			int r = Wire.requestFrom(i2c_addr, size-pos);
+			if (r<1) {
+				Serial.print("I2C Read error: read ");
+				Serial.print(pos);
+				Serial.print(" bytes, asked for ");
+				Serial.print(size-pos);
+				Serial.print(" more, but got ");
+				Serial.println(r);
+				return 0;
+			}
+			if (debug>=3) {
+				Serial.print("I2C incr read: got ");
+				Serial.print(pos);
+				Serial.print(" bytes so far, asked for ");
+				Serial.print(size-pos);
+				Serial.print(" more, got ");
+				Serial.println(r);
+			}
+			while(Wire.available()) {
+				buf[pos] = Wire.read();
+				Serial.print(pos); Serial.print(" <= 0x"); Serial.println(buf[pos], HEX);
+				pos++;
+			}
+		}
+		return 1;
+	}
 }
 
 int JMY6xx::_recv() {
   if (debug>=3) Serial.println("RECEIVING");
 
-  if (_read(buf, 2)) return 0;
-  int len = buf[0]*256 + buf[1];
-  if (len==65535) {
-    Serial.println("LEN 65535");
-    return 0;
-  }
-  if (len > JMY6XX_BUF_SIZE) {
-    Serial.println("BUFFER OVERFLOW");
-    return 0;
-  }
-  if (_read(buf+2, len-1)) return 0;
-  byte chk = 0;
-  byte chk2 = buf[len];
-  for (int i=0; i<len; i++) chk ^= buf[i];
+	if (S) {
+	  if (!_read(buf, 2)) return 0;
+	  int len = buf[0]*256 + buf[1];
+	  if (len==65535) {
+	    Serial.println("LEN 65535");
+	    return 0;
+	  }
+	  if (len > JMY6XX_BUF_SIZE) {
+	    Serial.println("BUFFER OVERFLOW");
+	    return 0;
+	  }
+	  if (!_read(buf+2, len-2+1)) return 0;
 
-  if (chk != chk2) {
-    Serial.print("ERROR: checksum mismatch, expected 0x");
-    Serial.print(chk, HEX);
-    Serial.print(" but got 0x");
-    Serial.println(chk2, HEX);
-    return 0;
-  }
-
-  return len;
-}
-
-int JMY6xx::_recv2() {
-  if (debug>=3) Serial.println("RECEIVING");
-  int i;
-  byte chk = 0;
-  chk ^= buf[0] = _read();
-  if (buf[0]==255) {
-    return 0;
-  }
-  chk ^= buf[1] = _read();
-  int len = buf[0]*256+buf[1];
-  if (len>JMY6XX_BUF_SIZE) {
-    Serial.println(String("")+"ERROR: must read "+len+" bytes, but max "+JMY6XX_BUF_SIZE+" available. Abort without reading");
-    return 0;
-  }
-  for (int i=2; i<len; i++) {
-    chk ^= buf[i] = _read();
-  }
-  buf[len] = 0; // complimentary \0 terminator :)
-
-  if (debug>=3) hexdump(buf, len);
-  byte chk2 = buf[len] = _read();
-  if (chk != chk2) {
-    Serial.print("ERROR: checksum mismatch, expected 0x");
-    Serial.print(chk, HEX);
-    Serial.print(" but got 0x");
-    Serial.println(chk2, HEX);
-    return 0;
-  }
-  return len;
+		if (debug>=3) hexdump(buf, len+1);
+	
+	  byte chk = 0;
+	  byte chk2 = buf[len];
+	  for (int i=0; i<len; i++) chk ^= buf[i];
+	
+	  if (chk != chk2) {
+	    Serial.print("ERROR: checksum mismatch, expected 0x");
+	    Serial.print(chk, HEX);
+	    Serial.print(" but got 0x");
+	    Serial.println(chk2, HEX);
+	    return 0;
+	  }
+		return len;
+	} 
+	else {
+		int len = Wire.requestFrom(0x50, JMY6XX_BUF_SIZE);
+		if (!len) {
+			delay(5);
+			len = Wire.requestFrom(0x50, JMY6XX_BUF_SIZE);
+		}
+		if (!len) {
+			delay(15);
+			len = Wire.requestFrom(0x50, JMY6XX_BUF_SIZE);
+		}
+		if (!len) {
+			delay(45);
+			len = Wire.requestFrom(0x50, JMY6XX_BUF_SIZE);
+		}
+		if (debug>=2) {
+			Serial.print("requestFrom() => ");
+			Serial.println(len);
+		}
+		for (int i=0; Wire.available(); i++) {
+			buf[i] = Wire.read();
+		}
+		len = buf[0]*256+buf[1];
+		if (debug>=3) hexdump(buf, len);
+		return len;
+	}
 }
 
 void JMY6xx::info() {
@@ -300,7 +334,7 @@ const byte* JMY6xx::scan() {
   if (debug>=2) Serial.println("scan()");
 
   //data[0] = 0x00; // AFI
-  if (_req(0x5C, 0)) {
+  if (_req(0x5C, 0)>5) {
     for (int i=0; i<8; i++) {
       uid[i] = data[8-i]; // uid, reverse
     }
@@ -318,7 +352,7 @@ const byte* JMY6xx::scan(byte afi) {
   }
 
   data[0] = afi;
-  if (_req(0x5C, 1)) {
+  if (_req(0x5C, 1)>5) {
     for (int i=0; i<8; i++) {
       uid[i] = data[8-i]; // uid, reverse
     }

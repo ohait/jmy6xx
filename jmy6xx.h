@@ -8,6 +8,7 @@
 class JMY6xx {
   Stream *S;
   int addr = 0;
+  int i2c_addr = 0x50; // default
   
   byte buf[JMY6XX_BUF_SIZE]; // 2 bytes length, 1 addr, 1 cmd, [data]+, chk
   byte* data = buf+4; // helper
@@ -28,6 +29,8 @@ class JMY6xx {
     int ready(const byte* uid);
     int write(int block, int size, const byte* data);
 
+    void hexprint(Stream *S, const byte* data, int len);
+    void hexdump(Stream *S, const byte* data, int len);
     void hexprint(const byte* data, int len);
     void hexdump(const byte* data, int len);
 
@@ -38,8 +41,6 @@ class JMY6xx {
     int _req(const byte cmd, int size);
     virtual void _send(const byte cmd, int size);
     int _recv();
-    int _recv2();
-    virtual int _read(); // wait for a single byte
     virtual int _read(byte* at, int size);
 };
 
