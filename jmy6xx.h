@@ -17,8 +17,8 @@ class JMY6xx {
   byte dsfid;
   
   public:
-    JMY6xx(byte i2c_addr); // use i2c
     JMY6xx(Stream *S);
+    JMY6xx(int addr); // use i2c
     void setAddress(int addr);
     void info();
     const byte* scan();
@@ -28,16 +28,23 @@ class JMY6xx {
     int ready(const byte* uid);
     int write(int block, int size, const byte* data);
 
+    void hexprint(const byte* data, int len);
+    void hexdump(const byte* data, int len);
+
     int debug = 0;
     int read_timeout = 3000;
 
   private:
     int _req(const byte cmd, int size);
-    void _send(const byte cmd, int size);
+    virtual void _send(const byte cmd, int size);
     int _recv();
-    int _read(); // wait for a single byte
-    void hexprint(const byte* data, int len);
-    void serialhexdump(const byte* data, int len);
+    int _recv2();
+    virtual int _read(); // wait for a single byte
+    virtual int _read(byte* at, int size);
 };
+
+
+
+
 
 #endif
