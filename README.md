@@ -2,16 +2,15 @@
 
 This library is meant to be used with JMY6xx modules (like the JMY622 or JMY612 for reading ISO 14443 or ISO 15693 rfid tags)
 
-It supports both UART (by passing a reference to a Stream) ad I2C
+It supports both UART (by passing a reference to a Stream, can be Serial1, SoftwareSerial, etc) and I2C:
 
 ```C
 #include <SoftwareSerial.h>
 SoftwareSerial SSerial(12, 14); // RX, TX to the RFID module
-//SoftwareSerial SSerial(0x50); // the I2C address (note below)
 
 #include <jmy6xx.h>;
-//JMY6xx jmy622(&SSerial); // pointer to a Stream object, can be SoftSerial or Serial1
-JMY6xx jmy622(0x50); // I2C address (default is 0xA0, which is 0x50 in Wire.h)
+JMY6xx jmy622(&SSerial); // pointer to a Stream object, can be SoftSerial or Serial1
+//JMY6xx jmy622(0x50); // I2C address (default is 0xA0, which is 0x50 in Wire.h)
 
 void setup() {
   SSerial.begin(19200);
