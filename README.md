@@ -46,3 +46,28 @@ tested with SoftwareSerial, should work with any library that extends Stream
 JMY622 supports I2C, and even tho the default address in the documentation is 0xA0, you should use **0x50**. 
 
 The Wire library consider only the 7 address bits, so the number is from 0 to 127. But jinmuyu documentation consider the whole byte (so 0xA0 for writing, and 0xA1 for reading). If you changed the defaults, just remember to **divide by 2** when entering the ic2_address in the constructor.
+
+## commands
+
+I'm adding commands as long as I need them, so for now they are not too many.
+
+### custom command
+
+this feature might be removed soon.
+
+```
+#include <jmy6xx.h>
+JMY6xx rfid(0x50);
+
+void setup() {
+  Serial.begin(9600);
+
+  rfid.data[0] = 0x12; // AFI
+  // .data is RW. the response will overwrite the request
+  
+  int len = rfid._req(0x5C, 1); // 0x5C is ISO15693 Inventory, 1 is for the lenght of **data**
+  if (len) {
+    rfid.hexdump(rfid.data, len-4); // len include 4 header bytes
+  }
+}
+```
