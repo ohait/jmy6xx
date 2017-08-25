@@ -51,15 +51,35 @@ The Wire library consider only the 7 address bits, so the number is from 0 to 12
 
 I'm adding commands as long as I need them, so for now they are not too many.
 
-|code|name|status|comments|
-|----|----|------|--------|
-|0x10|info()|OK|it also request 0x03 (PCD info) and dump to Serial|
-||ISO 15693|||
-|0x5C|scan(afi?)|OK|both with and w/o AFI|
-|0x5D|quiet()|OK||
-|0x5F|ready(uid)|OK||
-|0x54|read(first,ct)|OK|reads ct blocks, starting from first (usually 4bytes per block)|
+### Generic
 
+#### `info()`
+
+Dumps on Serial a list of information retrieved via 0x10 and 0x03
+
+### ISO 15693
+
+#### `const char* scan()` and `const char* scan(const char* afi)`
+
+Performs an inventory (0x5C).
+
+If there is at least one tag present, then the tag is marked as `current` and the `uid` is returned.
+
+the optional `afi` argument can be used to limit to tags which the corresponding afi value
+
+Note: `memcpy` the returned value, or it will be overwritten by the next call
+
+#### `quiet()`
+
+set the current tag (if any) to *Stay Quiet* (0x5D)
+
+#### `ready(const char* uid)`
+
+reset a tag to *Ready* which was previously set to *Stay Quiet* (0x5F)
+
+#### `const char* read(int first, int count)`
+
+if the current tag is still in range, read `count` blocks starting from `first`
 
 ### custom command
 
