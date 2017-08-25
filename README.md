@@ -59,9 +59,9 @@ Dumps on Serial a list of information retrieved via 0x10 and 0x03
 
 ### ISO 15693
 
-#### `const char* scan()` and `const char* scan(const char* afi)`
+#### 0x5C `const char* scan()` and `const char* scan(const char* afi)`
 
-Performs an inventory (0x5C).
+SCan for new tags in range.
 
 If there is at least one tag present, then the tag is marked as `current` and the `uid` is returned.
 
@@ -69,15 +69,15 @@ the optional `afi` argument can be used to limit to tags which the corresponding
 
 Note: `memcpy` the returned value, or it will be overwritten by the next call
 
-#### `quiet()`
+#### 0x5D `quiet()`
 
-set the current tag (if any) to *Stay Quiet* (0x5D)
+set the current tag (if any) to *Stay Quiet*
 
-#### `ready(const char* uid)`
+#### 0x5F `ready(const char* uid)`
 
-reset a tag to *Ready* which was previously set to *Stay Quiet* (0x5F)
+reset a tag to *Ready* which was previously set to *Stay Quiet*
 
-#### `const char* read(int first, int count)`
+#### 0x54 `const char* read(int first, int count)`
 
 if the current tag is still in range, read `count` blocks starting from `first`
 
