@@ -51,7 +51,38 @@ The Wire library consider only the 7 address bits, so the number is from 0 to 12
 
 I'm adding commands as long as I need them, so for now they are not too many.
 
+### Constructor
+
+#### `JMY6xx(Stream* Stream)`
+
+Construct a JMY6xx object which use the given `Stream` to send and receive data to the module.
+
+The stream must be initiated and setup (`begin(38400)` is the default)
+
 ### Generic
+
+#### `setAddress(int addr)`
+
+set the device address, default is 0 (broadcast)
+
+Note: this is the device address, not the I2C address. Keep it to 0 unless you use the same wires to talk with distinct modules.
+
+#### `hexprint(Stream *S, const byte* data, int len)`
+#### `hexprint(const byte* data, int len)`
+#### `hexdump(Stream *S, const byte* data, int len)`
+#### `hexdump(const byte* data, int len)`
+
+hexdump the given data to the give Stream, or Serial if not specified.
+
+`hexprint` write all the values in hex separated by colon. e.g.: `E0:11:22:33:44:55:66:77'
+
+`hexdump` is better for long data, it prints several lines of 8 bytes each. e.g.:
+```
+  0: 4A 4D 59 36 32 32 48 20  "JMY622H "
+  8: 35 2E 37 35 32 30 31 35  "5.752015"
+ 16: 31 31 33 30 00 01 A0 01  "1130...."
+ 24: 00 00 0A 00 00 00        "......"
+```
 
 #### `info()`
 
