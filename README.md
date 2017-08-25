@@ -26,6 +26,20 @@ void loop() {
 }
 ```
 
+## Supported devices
+
+| device | status |
+|--------|--------|
+| JMY622 | tested |
+| JMY612 | should work |
+| JMY620 | ? |
+| JMY601 | ? |
+| JMY6021 | ? |
+
+## UART
+
+tested with SoftwareSerial, should work with any library that extends Stream
+
 ## I2C
 
 JMY622 supports I2C, and the default address in the documentation is 0xA0.
