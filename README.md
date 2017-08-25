@@ -51,6 +51,16 @@ The Wire library consider only the 7 address bits, so the number is from 0 to 12
 
 I'm adding commands as long as I need them, so for now they are not too many.
 
+|code|name|status|comments|
+|----|----|------|--------|
+|0x10|info()|OK|it also request 0x03 (PCD info) and dump to Serial|
+||ISO 15693|||
+|0x5C|scan(afi?)|OK|both with and w/o AFI|
+|0x5D|quiet()|OK||
+|0x5F|ready(uid)|OK||
+|0x54|read(first,ct)|OK|reads ct blocks, starting from first (usually 4bytes per block)|
+
+
 ### custom command
 
 this feature might be removed soon.
