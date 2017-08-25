@@ -9,7 +9,8 @@ It supports both UART (by passing a reference to a Stream, can be Serial1, Softw
 SoftwareSerial SSerial(12, 14); // RX, TX to the RFID module
 
 #include <jmy6xx.h>;
-JMY6xx jmy622(&SSerial); // pointer to a Stream object, can be SoftSerial or Serial1
+JMY6xx jmy622(&SSerial); // pointer to SoftwareSerial
+//JMY6xx jmy622(&Serial1); // pointer to Serial1
 //JMY6xx jmy622(0x50); // I2C address (default is 0xA0, which is 0x50 in Wire.h)
 
 void setup() {
