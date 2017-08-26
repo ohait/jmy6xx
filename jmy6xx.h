@@ -25,8 +25,8 @@ class JMY6xx {
     JMY6xx(Stream *S);
     JMY6xx(int addr); // use i2c
     void setAddress(int addr);
-    void info();
-		void idle();
+    int info();
+		int idle();
     const byte* scan();
     const byte* scan(byte afi);
     const byte* read(int block, int size);

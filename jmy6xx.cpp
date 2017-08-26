@@ -233,11 +233,11 @@ int JMY6xx::_recv() {
 	}
 }
 
-void JMY6xx::info() {
+int JMY6xx::info() {
   if (debug) Serial.println("info()");
   if (!_req(0x10, 0)) {
     Serial.println("Can't find JMY6xx device");
-    return;
+    return 0;
   }
 /*
  * 30bytes; 
@@ -311,7 +311,7 @@ void JMY6xx::info() {
 
   if (!_req(0x03, 0)) {
     Serial.println("Can't obtain PCD info");
-    return;
+    return 0;
   }
 
   /*
@@ -338,9 +338,10 @@ void JMY6xx::info() {
   hexprint(data+12, 4);
   Serial.println();
 
+	return 1;
 }
 
-void JMY6xx::idle() {
+int JMY6xx::idle() {
 	data[0] = 0x55;
  	return _req(0x12,1);
 }
