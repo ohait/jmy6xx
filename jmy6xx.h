@@ -11,17 +11,22 @@ class JMY6xx {
   int i2c_addr = 0x50; // default
   
   byte buf[JMY6XX_BUF_SIZE]; // 2 bytes length, 1 addr, 1 cmd, [data]+, chk
-  byte* data = buf+4; // helper
   
   // current tag
   byte uid[8];
   byte dsfid;
   
-  public:
+  public: 
+    // TODO this should be private when library is complete
+    int _req(const byte cmd, int size);
+    byte* data = buf+4;
+
+		// PUBLIC
     JMY6xx(Stream *S);
     JMY6xx(int addr); // use i2c
     void setAddress(int addr);
     void info();
+		void idle();
     const byte* scan();
     const byte* scan(byte afi);
     const byte* read(int block, int size);
@@ -38,7 +43,6 @@ class JMY6xx {
     int read_timeout = 3000;
 
   private:
-    int _req(const byte cmd, int size);
     virtual void _send(const byte cmd, int size);
     int _recv();
     virtual int _read(byte* at, int size);

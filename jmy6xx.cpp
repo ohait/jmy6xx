@@ -135,7 +135,7 @@ int JMY6xx::_read(byte* buf, int size) {
 	    delay(5);
 	  }
 	  return 1;
-	} else {
+	} else { // UNUSED!
 		int pos = 0;
 		while(pos<size) {
 			int r = Wire.requestFrom(i2c_addr, size-pos);
@@ -198,17 +198,26 @@ int JMY6xx::_recv() {
 		return len;
 	} 
 	else {
+		delay(2);
 		int len = Wire.requestFrom(0x50, JMY6XX_BUF_SIZE);
 		if (!len) {
+//			Serial.println("waiting 5");
 			delay(5);
 			len = Wire.requestFrom(0x50, JMY6XX_BUF_SIZE);
 		}
 		if (!len) {
+//			Serial.println("waiting 15");
 			delay(15);
 			len = Wire.requestFrom(0x50, JMY6XX_BUF_SIZE);
 		}
 		if (!len) {
+//			Serial.println("waiting 45");
 			delay(45);
+			len = Wire.requestFrom(0x50, JMY6XX_BUF_SIZE);
+		}
+		if (!len) {
+			Serial.println("waiting 150");
+			delay(150);
 			len = Wire.requestFrom(0x50, JMY6XX_BUF_SIZE);
 		}
 		if (debug>=2) {
@@ -298,6 +307,7 @@ void JMY6xx::info() {
   hexprint(data+29, 1);
   Serial.println();
 
+	delay(10);
 
   if (!_req(0x03, 0)) {
     Serial.println("Can't obtain PCD info");
@@ -328,6 +338,11 @@ void JMY6xx::info() {
   hexprint(data+12, 4);
   Serial.println();
 
+}
+
+void JMY6xx::idle() {
+	data[0] = 0x55;
+ 	return _req(0x12,1);
 }
 
 const byte* JMY6xx::scan() {
@@ -364,7 +379,7 @@ const byte* JMY6xx::scan(byte afi) {
 
 int JMY6xx::quiet() {
   if (debug) Serial.println("quiet()");
-  _req(0x5D, 0);
+  return _req(0x5D, 0);
 }
 
 int JMY6xx::ready(const byte* uid) {
