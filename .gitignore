@@ -30,3 +30,11 @@
 *.exe
 *.out
 *.app
+
+# vim
+*.swp
+*.swo
+
+# other tmp
+*~
+
