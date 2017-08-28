@@ -24,15 +24,18 @@ class JMY6xx {
 		// PUBLIC
     JMY6xx(Stream *S);
     JMY6xx(int addr); // use i2c
-    void setAddress(int addr);
-    int info();
-		int idle();
-    const byte* scan();
-    const byte* scan(byte afi);
-    const byte* read(int block, int size);
-    int quiet();
-    int ready(const byte* uid);
-    int write(int block, int size, const byte* data);
+
+    void        setAddress(int addr);
+    int         info();
+		int         idle();
+
+    const byte* iso15693_scan();
+    const byte* iso15693_scan(byte afi);
+		int         iso15693_info();
+    const byte* iso15693_read(int block, int size);
+    int         iso15693_quiet();
+    int         iso15693_ready(const byte* uid);
+    int         iso15693_write(int block, int size, const byte* data);
 
     void hexprint(Stream *S, const byte* data, int len);
     void hexdump(Stream *S, const byte* data, int len);

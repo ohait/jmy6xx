@@ -346,7 +346,7 @@ int JMY6xx::idle() {
  	return _req(0x12,1);
 }
 
-const byte* JMY6xx::scan() {
+const byte* JMY6xx::iso15693_scan() {
   if (debug>=2) Serial.println("scan()");
 
   //data[0] = 0x00; // AFI
@@ -360,7 +360,7 @@ const byte* JMY6xx::scan() {
   return NULL;
 }
 
-const byte* JMY6xx::scan(byte afi) {
+const byte* JMY6xx::iso15693_scan(byte afi) {
   if (debug) {
     Serial.print("scan(afi: 0x");
     Serial.print(afi, HEX);
@@ -378,12 +378,23 @@ const byte* JMY6xx::scan(byte afi) {
   return NULL;
 }
 
-int JMY6xx::quiet() {
+int JMY6xx::iso15693_info() {
+  if (debug) Serial.println("info()");
+	int rlen = _req(0x5E, 0);
+	if (rlen) {
+		hexdump(data, rlen-4);
+		return rlen-4;
+	} else {
+		return 0;
+	}
+}
+
+int JMY6xx::iso15693_quiet() {
   if (debug) Serial.println("quiet()");
   return _req(0x5D, 0);
 }
 
-int JMY6xx::ready(const byte* uid) {
+int JMY6xx::iso15693_ready(const byte* uid) {
   if (debug) {
     Serial.print("ready(uid: ");
     hexprint(uid, 8);
@@ -396,7 +407,7 @@ int JMY6xx::ready(const byte* uid) {
   return _req(0x5F, 0);
 }
 
-const byte* JMY6xx::read(int block, int ct) {
+const byte* JMY6xx::iso15693_read(int block, int ct) {
   if (debug) {
     Serial.print("read(from block: ");
     Serial.print(block);
