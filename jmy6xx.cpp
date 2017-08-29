@@ -32,7 +32,7 @@ void JMY6xx::hexprint(Stream *S, const byte* data, int length) {
 }
 
 void JMY6xx::hexprint(const byte* data, int length) {
-//	hexprint(&Serial, data, length);
+//  hexprint(&Serial, data, length);
   if (!data) {
     Serial.println("NULL");
     return;
@@ -116,121 +116,129 @@ void JMY6xx::_send(byte cmd, int len) {
 }
 
 int JMY6xx::_read(byte* buf, int size) {
-	if (debug>=3) {
-		Serial.print("_read(buf, ");
-		Serial.print(size);
-		Serial.println(")");
-	}
-	if (S) {
-	  long expire = millis() + read_timeout;
-	  for (int at = 0;;) {
-	    int r = S->readBytes(buf+at, size-at);
-	    at += r;
-	    if (debug>=3) hexdump(buf, at);
-	    if (at==size) return 0;
-	    if (millis() > expire) {
-				Serial.println("_read(at, size) TIMEOUT");
-				return 0;
-	    }
-	    delay(5);
-	  }
-	  return 1;
-	} else { // UNUSED!
-		int pos = 0;
-		while(pos<size) {
-			int r = Wire.requestFrom(i2c_addr, size-pos);
-			if (r<1) {
-				Serial.print("I2C Read error: read ");
-				Serial.print(pos);
-				Serial.print(" bytes, asked for ");
-				Serial.print(size-pos);
-				Serial.print(" more, but got ");
-				Serial.println(r);
-				return 0;
-			}
-			if (debug>=3) {
-				Serial.print("I2C incr read: got ");
-				Serial.print(pos);
-				Serial.print(" bytes so far, asked for ");
-				Serial.print(size-pos);
-				Serial.print(" more, got ");
-				Serial.println(r);
-			}
-			while(Wire.available()) {
-				buf[pos] = Wire.read();
-				Serial.print(pos); Serial.print(" <= 0x"); Serial.println(buf[pos], HEX);
-				pos++;
-			}
-		}
-		return 1;
-	}
+  if (debug>=3) {
+    Serial.print("_read(buf, ");
+    Serial.print(size);
+    Serial.println(")");
+  }
+  if (S) {
+    long expire = millis() + read_timeout;
+    for (int at = 0;;) {
+      int r = S->readBytes(buf+at, size-at);
+      at += r;
+      if (debug>=3) hexdump(buf, at);
+      if (at==size) return 0;
+      if (millis() > expire) {
+        Serial.println("_read(at, size) TIMEOUT");
+        return 0;
+      }
+      delay(5);
+    }
+    return 1;
+  } else { // UNUSED
+    int pos = 0;
+    while(pos<size) {
+      int r = Wire.requestFrom(i2c_addr, size-pos);
+      if (r<1) {
+        Serial.print("I2C Read error: read ");
+        Serial.print(pos);
+        Serial.print(" bytes, asked for ");
+        Serial.print(size-pos);
+        Serial.print(" more, but got ");
+        Serial.println(r);
+        return 0;
+      }
+      if (debug>=3) {
+        Serial.print("I2C incr read: got ");
+        Serial.print(pos);
+        Serial.print(" bytes so far, asked for ");
+        Serial.print(size-pos);
+        Serial.print(" more, got ");
+        Serial.println(r);
+      }
+      while(Wire.available()) {
+        buf[pos] = Wire.read();
+        Serial.print(pos); Serial.print(" <= 0x"); Serial.println(buf[pos], HEX);
+        pos++;
+      }
+    }
+    return 1;
+  }
+}
+
+int i2c_read(byte* buf, int size) {
+  int len = 0;
+  for (int i=0; i<30;i++) {
+    int len = Wire.requestFrom(0x50, size);
+    if (len) {
+      int r = 0;
+      for (r=0; r<len; r++)
+        buf[r] = Wire.read();
+      hexdump(buf, size);
+      return r;
+    }
+    delay(10);
+  }
+  return 0;
 }
 
 int JMY6xx::_recv() {
   if (debug>=3) Serial.println("RECEIVING");
 
-	if (S) {
-	  if (!_read(buf, 2)) return 0;
-	  int len = buf[0]*256 + buf[1];
-	  if (len==65535) {
-	    Serial.println("LEN 65535");
-	    return 0;
-	  }
-	  if (len > JMY6XX_BUF_SIZE) {
-	    Serial.println("BUFFER OVERFLOW");
-	    return 0;
-	  }
-	  if (!_read(buf+2, len-2+1)) return 0;
+  if (S) {
+    if (!_read(buf, 2)) return 0;
+    int len = buf[0]*256 + buf[1];
+    if (len==65535) {
+      Serial.println("LEN 65535");
+      return 0;
+    }
+    if (len > JMY6XX_BUF_SIZE) {
+      Serial.println("BUFFER OVERFLOW");
+      return 0;
+    }
+    if (!_read(buf+2, len-2+1)) return 0;
 
-		if (debug>=3) hexdump(buf, len+1);
-	
-	  byte chk = 0;
-	  byte chk2 = buf[len];
-	  for (int i=0; i<len; i++) chk ^= buf[i];
-	
-	  if (chk != chk2) {
-	    Serial.print("ERROR: checksum mismatch, expected 0x");
-	    Serial.print(chk, HEX);
-	    Serial.print(" but got 0x");
-	    Serial.println(chk2, HEX);
-	    return 0;
-	  }
-		return len;
-	} 
-	else {
-		delay(2);
-		int len = Wire.requestFrom(0x50, JMY6XX_BUF_SIZE);
-		if (!len) {
-//			Serial.println("waiting 5");
-			delay(5);
-			len = Wire.requestFrom(0x50, JMY6XX_BUF_SIZE);
-		}
-		if (!len) {
-//			Serial.println("waiting 15");
-			delay(15);
-			len = Wire.requestFrom(0x50, JMY6XX_BUF_SIZE);
-		}
-		if (!len) {
-//			Serial.println("waiting 45");
-			delay(45);
-			len = Wire.requestFrom(0x50, JMY6XX_BUF_SIZE);
-		}
-		if (!len) {
-			Serial.println("waiting 150");
-			delay(150);
-			len = Wire.requestFrom(0x50, JMY6XX_BUF_SIZE);
-		}
-		if (debug>=2) {
-			Serial.print("requestFrom() => ");
-			Serial.println(len);
-		}
-		for (int i=0; Wire.available(); i++) {
-			buf[i] = Wire.read();
-		}
-		len = buf[0]*256+buf[1];
-		if (debug>=3) hexdump(buf, len);
-		return len;
-	}
+    if (debug>=3) hexdump(buf, len+1);
+
+    byte chk = 0;
+    byte chk2 = buf[len];
+    for (int i=0; i<len; i++) chk ^= buf[i];
+
+    if (chk != chk2) {
+      Serial.print("ERROR: checksum mismatch, expected 0x");
+      Serial.print(chk, HEX);
+      Serial.print(" but got 0x");
+      Serial.println(chk2, HEX);
+      return 0;
+    }
+    return len;
+  }
+  else {
+    int pos = 0;
+    pos += i2c_read(buf+pos, 64);
+    int len = buf[0]*256+buf[1];
+    if (pos<len) {
+        Serial.println("BUFFER OVERFLOW, INCREASE Wire.h BUFFER_SIZE");
+        return 0;
+    }
+
+    byte chk = 0;
+    for (int i=0; i<len; i++) chk ^= buf[i];
+
+    if (chk != buf[len]) {
+        Serial.print("checksum error, expected: 0x");
+        Serial.print(chk, HEX);
+        Serial.print(" but got: 0x");
+        Serial.print(buf[len], HEX);
+        Serial.print(", length: ");
+        Serial.println(len);
+
+        hexdump(buf, len+1);
+        return 0;
+    }
+    if (debug>=3) hexdump(buf, len+1);
+    return len;
+  }
 }
 
 int JMY6xx::info() {

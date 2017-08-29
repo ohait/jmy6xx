@@ -1,7 +1,7 @@
 #ifndef JMY6xx_h
 #define JMY6xx_h
 
-#define JMY6XX_BUF_SIZE 512
+#define JMY6XX_BUF_SIZE 64
 #define byte uint8_t
 #include <Stream.h>
 
