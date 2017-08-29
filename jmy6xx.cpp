@@ -72,13 +72,13 @@ void JMY6xx::hexdump(Stream *S, const byte* data, int length) {
 }
 
 void JMY6xx::hexdump(const byte* data, int length) {
-	hexdump(&Serial, data, length);
+  hexdump(&Serial, data, length);
 }
-			
+
 
 int JMY6xx::_req(byte cmd, int len) {
   _send(cmd, len);
-	int rlen = _recv();
+  int rlen = _recv();
   if (!rlen) return 0;
   if (buf[3] == cmd) return rlen;
 
@@ -96,7 +96,7 @@ int JMY6xx::_req(byte cmd, int len) {
 void JMY6xx::_send(byte cmd, int len) {
   if (!S) Wire.beginTransmission(i2c_addr);
 
-	if (debug>=3) Serial.println("SENDING");
+  if (debug>=3) Serial.println("SENDING");
   len +=4; // 2 length, 1 addr, 1 cmd
   int i;
   buf[1] = len%256;
@@ -112,7 +112,7 @@ void JMY6xx::_send(byte cmd, int len) {
   if (debug>=3) { Serial.print("chk: 0x"); Serial.println(chk, HEX); }
   S ? S->write(chk) : Wire.write(chk);
 
-	if (!S) Wire.endTransmission();
+  if (!S) Wire.endTransmission();
 }
 
 int JMY6xx::_read(byte* buf, int size) {
@@ -307,7 +307,7 @@ int JMY6xx::info() {
   hexprint(data+29, 1);
   Serial.println();
 
-	delay(10);
+  delay(10);
 
   if (!_req(0x03, 0)) {
     Serial.println("Can't obtain PCD info");
@@ -338,12 +338,12 @@ int JMY6xx::info() {
   hexprint(data+12, 4);
   Serial.println();
 
-	return 1;
+  return 1;
 }
 
 int JMY6xx::idle() {
-	data[0] = 0x55;
- 	return _req(0x12,1);
+  data[0] = 0x55;
+   return _req(0x12,1);
 }
 
 const byte* JMY6xx::iso15693_scan() {
@@ -380,13 +380,13 @@ const byte* JMY6xx::iso15693_scan(byte afi) {
 
 int JMY6xx::iso15693_info() {
   if (debug) Serial.println("info()");
-	int rlen = _req(0x5E, 0);
-	if (rlen) {
-		hexdump(data, rlen-4);
-		return rlen-4;
-	} else {
-		return 0;
-	}
+  int rlen = _req(0x5E, 0);
+  if (rlen) {
+    hexdump(data, rlen-4);
+    return rlen-4;
+  } else {
+    return 0;
+  }
 }
 
 int JMY6xx::iso15693_quiet() {
