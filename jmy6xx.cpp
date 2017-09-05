@@ -325,7 +325,7 @@ int JMY6xx::info() {
 
 int JMY6xx::idle() {
   data[0] = 0x55;
-   return _req(0x12,1);
+  return _req(0x12,1);
 }
 
 const byte* JMY6xx::iso15693_scan() {
