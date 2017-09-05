@@ -11,7 +11,7 @@ SoftwareSerial SSerial(12, 14); // RX, TX to the RFID module
 #include <jmy6xx.h>;
 JMY6xx jmy622(&SSerial); // pointer to SoftwareSerial
 //JMY6xx jmy622(&Serial1); // pointer to Serial1
-//JMY6xx jmy622(0x50); // I2C address (default is 0xA0, which is 0x50 in Wire.h)
+//JMY6xx jmy622(0x50); // I2C address (read the I2C paragraph for important notes)
 
 void setup() {
   SSerial.begin(19200);
@@ -46,6 +46,10 @@ tested with SoftwareSerial, should work with any library that extends Stream
 JMY622 supports I2C, and even tho the default address in the documentation is 0xA0, you should use **0x50**. 
 
 The Wire library consider only the 7 address bits, so the number is from 0 to 127. But jinmuyu documentation consider the whole byte (so 0xA0 for writing, and 0xA1 for reading). If you changed the defaults, just remember to **divide by 2** when entering the ic2_address in the constructor.
+
+Also, the Wire.h library force a max buffer size of **32 bytes**. When the library issue a requestForm() for more than 32 bytes, Wire.h simply downgrade it to 32. This is not supported by JMY6xx modules, so you can't just fetch data in two rounds.
+
+This has caused me quite some headache with .info() and .iso15693_read(). You can modify Wire.h to allow more than 32 bytes to circumvent it.
 
 ## commands
 
