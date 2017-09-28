@@ -50,6 +50,7 @@ void JMY6xx::hexdump(Stream *S, const byte* data, int length) {
     return;
   }
   for (int i=0; i<length; i+=8) {
+    delay(1);
     if (i<10) S->print("  ");
     else if (i<100) S->print(" ");
     S->print(i);
@@ -94,7 +95,11 @@ int JMY6xx::_req(byte cmd, int len) {
 }
 
 void JMY6xx::_send(byte cmd, int len) {
-  if (!S) Wire.beginTransmission(i2c_addr);
+  if (S) {
+    while (S->available()) S->read();
+  } else {
+    Wire.beginTransmission(i2c_addr);
+  }
 
   if (debug>=3) Serial.println("SENDING");
   len +=4; // 2 length, 1 addr, 1 cmd
@@ -157,22 +162,19 @@ int JMY6xx::_recv() {
 
   if (S) {
     if (!serial_read(buf, 2)) {
-			Serial.println("frame length read failed");
-			return 0;
-		}
-    int len = buf[0]*256 + buf[1];
-		if (debug>=3) Serial.println(String("expecting ")+len+" bytes");
-    if (len==65535) {
-      Serial.println("LEN 65535");
+      Serial.println("frame length read failed");
       return 0;
     }
+    int len = buf[0]*256 + buf[1];
+    if (debug>=3) Serial.println(String("expecting ")+len+" bytes");
     if (len > JMY6XX_BUF_SIZE) {
       Serial.println("BUFFER OVERFLOW");
+      Serial.println(len);
       return 0;
     }
     if (!serial_read(buf+2, len-2+1)) return 0;
 
-    if (debug>=3) hexdump(buf, len+1);
+    if (debug>=2) hexdump(buf, len+1);
 
     byte chk = 0;
     byte chk2 = buf[len];
