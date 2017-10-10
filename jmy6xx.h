@@ -32,10 +32,10 @@ class JMY6xx {
     const byte* iso15693_scan();
     const byte* iso15693_scan(byte afi);
     int         iso15693_info();
-    const byte* iso15693_read(int block, int size);
+    const byte* iso15693_read(int block, int count);
     int         iso15693_quiet();
     int         iso15693_ready(const byte* uid);
-    int         iso15693_write(int block, int size, const byte* data);
+    int         iso15693_write(int block, int count, const byte* buf);
 
     void hexprint(Stream *S, const byte* data, int len);
     void hexdump(Stream *S, const byte* data, int len);

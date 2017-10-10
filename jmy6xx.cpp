@@ -408,6 +408,24 @@ const byte* JMY6xx::iso15693_read(int block, int ct) {
   }
 }
 
+int JMY6xx::iso15693_write(int block, int ct, const byte* buf) {
+  if (debug) {
+    Serial.print("write(from block: ");
+    Serial.print(block);
+    Serial.print(", nr blocks: ");
+    Serial.print(ct);
+    Serial.println(")");
+  }
+  data[0] = block;
+  data[1] = ct;
+  memcpy(data+2, buf, ct*4);
+  if (_req(0x55, 2+ct*4)) {
+    return ct*4;
+  } else {
+    return 0;
+  }
+}
+
 //byte inventory[] = { 0x00, 0x04, 0x00, 0x5C };
 //byte read_block[] = { 0x00, 0x06, 0x00, 0x54, 0, 9 };
 //byte stay_quiet[] = { 0x00, 0x04, 0x00, 0x5d };
