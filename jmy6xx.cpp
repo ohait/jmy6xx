@@ -49,13 +49,14 @@ void JMY6xx::hexdump(Stream *S, const byte* data, int length) {
     S->println("  0: NULL POINTER");
     return;
   }
-  for (int i=0; i<length; i+=8) {
+  for (int i=0; i<length; i+=16) {
     delay(1);
-    if (i<10) S->print("  ");
-    else if (i<100) S->print(" ");
-    S->print(i);
+    if (i<16) S->print("  ");
+    else if (i<256) S->print(" ");
+    S->print(i, HEX);
     S->print(":");
-    for (int j=i; j<i+8; j++) {
+    for (int j=i; j<i+16; j++) {
+      if (j%16==8) S->print(" ");
       if (j>=length) {
         S->print("   ");
       } else {
@@ -64,7 +65,7 @@ void JMY6xx::hexdump(Stream *S, const byte* data, int length) {
       }
     }
     S->print("  \"");
-    for (int j=i; j<length && j<i+8; j++) {
+    for (int j=i; j<length && j<i+16; j++) {
       if (data[j]>=0x20 && data[j]<=0x7E) S->write(data[j]);
       else S->print(".");
     }
