@@ -386,10 +386,10 @@ int JMY6xx::iso15693_ready(const byte* uid) {
     Serial.println(")");
   }
   for (int i=0; i<8; i++) {
-    data[7-i] = uid[i]; // reverse TODO
+    data[7-i] = uid[i]; // reverse
   }
   if (debug>=3) hexdump(data, 8);
-  return _req(0x5F, 0);
+  return _req(0x5F, 8);
 }
 
 const byte* JMY6xx::iso15693_read(int block, int ct) {
